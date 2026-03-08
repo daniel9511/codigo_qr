@@ -7,7 +7,6 @@ import os
 import urllib.parse
 from dotenv import load_dotenv
 
-
 def generated_qr(telefono_salon,mensaje):
 
     text_clean = urllib.parse.quote(mensaje)
@@ -24,11 +23,31 @@ def generated_qr(telefono_salon,mensaje):
     print(f"{url_whatsapp}")
     qr.make(fit=True)
 
+    # === NUEVO: ruta absoluta al logo ===
+    # __file__ = src/qr_generator.py
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # sube de src/ a raiz
+    logo_path = os.path.join(base_dir, "assets", "LogoSalon.png")
+    print(f"Ruta del logo: {logo_path}\n")
+
+    # Cargar y redimensionar logo (por si es muy grande)
+    logo = Image.open(logo_path)
+    logo_size = 450  # píxeles (ajusta según veas)
+    logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
+
+    # Generar QR básico (blanco/negro o con estilos si quieres)
     img_qr = qr.make_image(
-        image_factory=StyledPilImage, 
+        image_factory=StyledPilImage,
         module_drawer=CircleModuleDrawer(),
-        eye_drawer=RoundedModuleDrawer()
-        )
+        eye_drawer=RoundedModuleDrawer(),
+        # opcional: color_mask=SolidFillColorMask(back_color=(255,255,255), front_color=(0,64,255)),
+    ).convert("RGBA")
+
+    # Pegar logo en el centro
+    pos = (
+        (img_qr.size[0] - logo_size) // 2,
+        (img_qr.size[1] - logo_size) // 2,
+    )
+    img_qr.paste(logo, pos, mask=logo if logo.mode == "RGBA" else None)
     
     img_qr.save(f"test/qr_code.png")
 
