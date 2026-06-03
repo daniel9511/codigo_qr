@@ -60,6 +60,7 @@ The QR PNG is written to `test/qr_code.png`.
 | `qrcode[pil]` | QR generation + styled image factory |
 | `pillow` | Image rendering |
 | `python-dotenv` | Load `.env` variables |
+| `zxing-cpp` | QR decode for post-generation scannability check |
 
 ## Architecture
 
@@ -67,16 +68,30 @@ The entire logic lives in `src/core/main.py`:
 
 - `SERVICIOS` — editable list of salon services shown in the pre-classifier
   message.
+- `BOX_SIZE` / `DPI` — print resolution constants. Current values target ~25 cm
+  QR at 300 DPI, suitable for a 100×100 cm poster.
 - `construir_mensaje(codigo_campana)` — builds the pre-classifier message:
   greeting + service options joined by `/` + `ref:<codigo_campana>`.
 - `generated_qr(telefono_salon, mensaje)` — URL-encodes the message, builds the
   `wa.me` URL, creates the styled QR (circular modules, rounded eyes,
-  `ERROR_CORRECT_H`), saves the PNG.
+  `ERROR_CORRECT_H`), embeds the logo at 20% of the QR width, saves the PNG with
+  DPI metadata.
+- `verificar_qr(img, url_esperada)` — decodes the generated QR with `zxingcpp`
+  and confirms the embedded URL matches what was intended. Warns if the logo
+  covers too much and breaks scannability.
 - `main()` — loads `.env`, reads `numero_telefonico` and `codigo_campana`,
   calls `construir_mensaje`, then `generated_qr`.
 
 The `test/` directory is only an output folder for the generated image, not a
 test suite.
+
+## Future features (not yet implemented)
+
+- **Multi-campaign:** accept `codigos_campana=vitrina2025,recepcion2025` (comma-
+  separated) in `.env` and generate one PNG per code (`qr_vitrina2025.png`,
+  `qr_recepcion2025.png`) in a single run. Useful when the same salon needs
+  different attribution codes for different physical pieces (window, reception,
+  flyer).
 
 ## Pre-classifier message (QR design decision)
 
