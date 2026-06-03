@@ -104,8 +104,8 @@ codigo_qr/
 │   └── core/
 │       └── main.py             # Toda la lógica
 ├── test/
-│   └── qr_code.png             # Imagen generada (no se sube a git)
-├── .env                        # Variables privadas (no se sube a git)
+│   └── qr_code.png             # Imagen generada
+├── .env                        # Variables privadas
 ├── .env.example                # Plantilla de variables
 ├── pyproject.toml              # Dependencias (uv)
 ├── uv.lock                     # Lock file
