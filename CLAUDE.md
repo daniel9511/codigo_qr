@@ -74,8 +74,8 @@ The entire logic lives in `src/core/main.py`:
   greeting + service options joined by `/` + `ref:<codigo_campana>`.
 - `generated_qr(telefono_salon, mensaje)` — URL-encodes the message, builds the
   `wa.me` URL, creates the styled QR (circular modules, rounded eyes,
-  `ERROR_CORRECT_H`), embeds the logo at 20% of the QR width, saves the PNG with
-  DPI metadata.
+  `ERROR_CORRECT_H`), embeds the logo at 40% of the QR width (proportional
+  resize preserving aspect ratio), saves the PNG with DPI metadata.
 - `verificar_qr(img, url_esperada)` — decodes the generated QR with `zxingcpp`
   and confirms the embedded URL matches what was intended. Warns if the logo
   covers too much and breaks scannability.
@@ -85,13 +85,58 @@ The entire logic lives in `src/core/main.py`:
 The `test/` directory is only an output folder for the generated image, not a
 test suite.
 
-## Future features (not yet implemented)
+## Mejoras futuras
 
-- **Multi-campaign:** accept `codigos_campana=vitrina2025,recepcion2025` (comma-
-  separated) in `.env` and generate one PNG per code (`qr_vitrina2025.png`,
-  `qr_recepcion2025.png`) in a single run. Useful when the same salon needs
-  different attribution codes for different physical pieces (window, reception,
-  flyer).
+### Funcionalidades nuevas
+
+- **Multi-campaña:** aceptar `codigos_campana=vitrina2025,recepcion2025` (comma-
+  separated) en `.env` y generar un PNG por código (`qr_vitrina2025.png`,
+  `qr_recepcion2025.png`) en una sola ejecución. Útil cuando el mismo salón
+  necesita códigos distintos para vitrina, recepción, volante, etc.
+
+- **Color de marca configurable:** `COLOR_MODULOS` en `.env` para pintar los
+  módulos del QR con el color corporativo del salón (e.g. `#A0522D`). Se
+  implementa con `SolidFillColorMask` que ya está en el proyecto. Útil para
+  que el QR combine con el diseño del poster.
+
+- **CLI con argumentos:** reemplazar el `.env` por argumentos de línea de
+  comando (`--telefono`, `--campana`, `--logo`, `--logo-size`). Permite
+  generar QRs sin editar archivos, útil para automatización o uso por alguien
+  no técnico desde terminal.
+
+- **Logo configurable:** `logo_path` en `.env` en vez de hardcodeado a
+  `src/assets/LogoSalon.png`. Permite cambiar el logo sin tocar el código,
+  útil si el salón rediseña su logo o si el proyecto se reutiliza para otro
+  cliente.
+
+### Calidad e integración
+
+- **Exportación a PDF print-ready:** generar un PDF con marcas de corte y
+  sangrado además del PNG, listo para enviar directamente a imprenta. Pillow
+  soporta save a PDF; las marcas de corte se pueden dibujar con `ImageDraw`.
+
+- **Preview en miniatura:** generar automáticamente un `qr_preview.png` de
+  300×300 px junto al PNG de alta resolución, para verificar visualmente
+  cómo queda sin abrir un archivo de ~800 KB.
+
+- **Integración YCloud + bot:** cuando el salón empiece a usar YCloud para
+  leer los mensajes entrantes, el `ref:<codigo>` del mensaje permite
+  atribuir automáticamente cada nuevo chat a una pieza publicitaria. El bot
+  puede leer el código y registrar el origen sin intervención manual.
+
+- **Estadísticas de campaña:** con YCloud activo, cruzar el `ref:` de cada
+  chat con la fecha para saber cuántas consultas generó cada pieza (vitrina
+  vs. recepción vs. volante) y en qué horarios.
+
+### Deuda técnica menor
+
+- Reemplazar la cadena de `os.path.dirname` por `pathlib.Path(__file__).parents[n]`
+  para rutas más legibles y robustas si el proyecto crece.
+- Agregar `os.makedirs(exist_ok=True)` antes de `img_qr.save()` como guarda
+  defensiva si `test/` se elimina manualmente.
+- Conseguir `LogoSalon.png` en mayor resolución (actualmente 500×405 px);
+  al escalar al 40% del QR (1424 px) se interpola y puede verse borroso en
+  impresión de alta calidad.
 
 ## Pre-classifier message (QR design decision)
 
