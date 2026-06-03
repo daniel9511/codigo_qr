@@ -7,7 +7,24 @@ import os
 import urllib.parse
 from dotenv import load_dotenv
 
-def generated_qr(telefono_salon,mensaje):
+SERVICIOS = [
+    "manicure",
+    "pedicure",
+    "corte",
+    "tinte",
+    "otro",
+]
+
+def construir_mensaje(codigo_campana):
+    opciones = " / ".join(SERVICIOS)
+    return (
+        f"Hola 👋 quiero agendar una cita. "
+        f"Servicio de interés: {opciones} "
+        f"(deja solo el que quieras). "
+        f"ref:{codigo_campana}"
+    )
+
+def generated_qr(telefono_salon, mensaje):
 
     text_clean = urllib.parse.quote(mensaje)
     url_whatsapp = f"https://wa.me/{telefono_salon}?text={text_clean}"
@@ -49,20 +66,25 @@ def generated_qr(telefono_salon,mensaje):
     )
     img_qr.paste(logo, pos, mask=logo if logo.mode == "RGBA" else None)
     
-    img_qr.save(f"test/qr_code.png")
+    output_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "test", "qr_code.png"
+    )
+    img_qr.save(output_path)
 
 
 
 
-def main ():
-
+def main():
     load_dotenv()
     telefono_salon = os.getenv("numero_telefonico")
-    mensaje = f"¡Hola! Soy un cliente interesado en tus servicios. ¿Podrías proporcionarme más información sobre tu salón de belleza?"
-
-    generated_qr(telefono_salon,mensaje)
-
-    print("Bienvenido al generador de códigos QR personalizados")
+    codigo_campana = os.getenv("codigo_campana")
+    if not telefono_salon or not codigo_campana:
+        missing = [v for v, k in [("numero_telefonico", telefono_salon), ("codigo_campana", codigo_campana)] if not k]
+        raise ValueError(f"Faltan variables en .env: {', '.join(missing)}")
+    mensaje = construir_mensaje(codigo_campana)
+    generated_qr(telefono_salon, mensaje)
+    print("QR generado en test/qr_code.png")
 
 if __name__ == "__main__":
     main()

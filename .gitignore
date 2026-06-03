@@ -2,7 +2,11 @@
 ## .gitignore que SÍ funciona
 
 ```gitignore
+# Claude Code
+.claude/
+
 # Entorno virtual
+.venv/
 venv/
 env/
 ENV/
